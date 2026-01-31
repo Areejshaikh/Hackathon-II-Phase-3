@@ -1,0 +1,193 @@
+# Authentication API Contract
+
+## Overview
+This document defines the API contract for authentication endpoints in the Todo SaaS application.
+
+## Base URL
+`/api/auth`
+
+## Endpoints
+
+### POST /login
+Authenticate a user and return a session token.
+
+#### Request
+```json
+{
+  "email": "user@example.com",
+  "password": "secure_password_123"
+}
+```
+
+#### Response - 200 OK
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "user_123",
+      "email": "user@example.com",
+      "name": "John Doe"
+    },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "expiresIn": 3600
+  }
+}
+```
+
+#### Response - 401 Unauthorized
+```json
+{
+  "success": false,
+  "error": "Invalid credentials"
+}
+```
+
+#### Response - 400 Bad Request
+```json
+{
+  "success": false,
+  "error": "Email and password are required"
+}
+```
+
+### POST /register
+Register a new user account.
+
+#### Request
+```json
+{
+  "email": "user@example.com",
+  "password": "secure_password_123",
+  "name": "John Doe"
+}
+```
+
+#### Response - 201 Created
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "user_123",
+      "email": "user@example.com",
+      "name": "John Doe"
+    },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "expiresIn": 3600
+  }
+}
+```
+
+#### Response - 409 Conflict
+```json
+{
+  "success": false,
+  "error": "User with this email already exists"
+}
+```
+
+### POST /logout
+Invalidate the current user session.
+
+#### Headers
+```
+Authorization: Bearer {token}
+```
+
+#### Response - 200 OK
+```json
+{
+  "success": true,
+  "message": "Successfully logged out"
+}
+```
+
+### GET /me
+Get information about the currently authenticated user.
+
+#### Headers
+```
+Authorization: Bearer {token}
+```
+
+#### Response - 200 OK
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "user_123",
+      "email": "user@example.com",
+      "name": "John Doe",
+      "role": "user"
+    }
+  }
+}
+```
+
+#### Response - 401 Unauthorized
+```json
+{
+  "success": false,
+  "error": "Authentication required"
+}
+```
+
+### POST /refresh
+Refresh the authentication token.
+
+#### Request
+```json
+{
+  "refreshToken": "refresh_token_here"
+}
+```
+
+#### Response - 200 OK
+```json
+{
+  "success": true,
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "expiresIn": 3600
+  }
+}
+```
+
+### POST /forgot-password
+Initiate password reset process.
+
+#### Request
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+#### Response - 200 OK
+```json
+{
+  "success": true,
+  "message": "Password reset email sent"
+}
+```
+
+### POST /reset-password
+Reset user password with a reset token.
+
+#### Request
+```json
+{
+  "token": "reset_token_here",
+  "password": "new_secure_password_123"
+}
+```
+
+#### Response - 200 OK
+```json
+{
+  "success": true,
+  "message": "Password reset successfully"
+}
+```

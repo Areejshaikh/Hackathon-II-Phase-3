@@ -1,0 +1,349 @@
+openapi: 3.0.3
+info:
+  title: Chat API for Cohere Chatbot Integration
+  description: API for handling AI-powered chat interactions with task management capabilities
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+    description: Development server
+  - url: https://api.yourapp.com
+    description: Production server
+
+paths:
+  /api/{user_id}/chat:
+    post:
+      summary: Send a message to the AI chatbot
+      description: Process natural language input and return AI-generated response with potential task operations
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the user making the request
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - message
+                - conversation_id
+              properties:
+                message:
+                  type: string
+                  description: The user's message to the chatbot
+                  example: "Add a task to buy groceries"
+                conversation_id:
+                  type: integer
+                  description: The ID of the conversation (null for new conversation)
+                  example: 123
+                metadata:
+                  type: object
+                  description: Additional metadata for the message
+                  example: {}
+      responses:
+        '200':
+          description: Successful response from the AI chatbot
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - response
+                  - conversation_id
+                  - messages
+                properties:
+                  response:
+                    type: string
+                    description: The AI-generated response
+                    example: "I've added the task 'buy groceries' to your list."
+                  conversation_id:
+                    type: integer
+                    description: The ID of the conversation
+                    example: 123
+                  messages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Message'
+                  tool_results:
+                    type: array
+                    description: Results from any tools executed during the conversation
+                    items:
+                      type: object
+                      additionalProperties: true
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+
+  /api/{user_id}/conversations:
+    get:
+      summary: Get user's conversations
+      description: Retrieve a list of the user's chat conversations
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the user whose conversations to retrieve
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of conversations to return
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: offset
+          in: query
+          required: false
+          description: Number of conversations to skip
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of user's conversations
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - conversations
+                  - total
+                properties:
+                  conversations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Conversation'
+                  total:
+                    type: integer
+                    description: Total number of conversations
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+
+  /api/{user_id}/conversations/{conversation_id}:
+    get:
+      summary: Get conversation history
+      description: Retrieve the message history for a specific conversation
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the user
+          schema:
+            type: string
+        - name: conversation_id
+          in: path
+          required: true
+          description: The ID of the conversation to retrieve
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Conversation message history
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - conversation
+                  - messages
+                properties:
+                  conversation:
+                    $ref: '#/components/schemas/Conversation'
+                  messages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Message'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Conversation:
+      type: object
+      required:
+        - id
+        - user_id
+        - title
+        - created_at
+        - updated_at
+        - is_active
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the conversation
+          example: 123
+        user_id:
+          type: string
+          description: ID of the user who owns this conversation
+          example: "user_abc123"
+        title:
+          type: string
+          description: Auto-generated or user-defined title
+          example: "Task Management Session"
+        created_at:
+          type: string
+          format: date-time
+          description: When the conversation was created
+          example: "2023-10-20T10:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: When the conversation was last updated
+          example: "2023-10-20T10:30:00Z"
+        is_active:
+          type: boolean
+          description: Whether the conversation is currently active
+          example: true
+
+    Message:
+      type: object
+      required:
+        - id
+        - conversation_id
+        - role
+        - content
+        - timestamp
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the message
+          example: 456
+        conversation_id:
+          type: integer
+          description: ID of the conversation this message belongs to
+          example: 123
+        role:
+          type: string
+          enum: [user, assistant, tool]
+          description: The role of the message sender
+          example: "user"
+        content:
+          type: string
+          description: The content of the message
+          example: "Add a task to buy groceries"
+        timestamp:
+          type: string
+          format: date-time
+          description: When the message was created
+          example: "2023-10-20T10:15:00Z"
+        tool_call:
+          type: object
+          description: Details of any tool called by the assistant
+          properties:
+            name:
+              type: string
+              description: Name of the tool
+              example: "add_task"
+            arguments:
+              type: object
+              description: Arguments passed to the tool
+              example: {"title": "buy groceries", "description": "get milk and bread"}
+        tool_response:
+          type: object
+          description: Response from a tool call
+          properties:
+            result:
+              type: object
+              description: Result of the tool execution
+              example: {"success": true, "task_id": 789}
+
+  responses:
+    Unauthorized:
+      description: Unauthorized - Invalid or missing authentication token
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+              - message
+            properties:
+              error:
+                type: string
+                example: "unauthorized"
+              message:
+                type: string
+                example: "Invalid or missing authentication token"
+
+    Forbidden:
+      description: Forbidden - User ID in URL doesn't match authenticated user
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+              - message
+            properties:
+              error:
+                type: string
+                example: "forbidden"
+              message:
+                type: string
+                example: "Access denied: user ID mismatch"
+
+    NotFound:
+      description: Not Found - Requested resource doesn't exist
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+              - message
+            properties:
+              error:
+                type: string
+                example: "not_found"
+              message:
+                type: string
+                example: "Requested resource not found"
+
+    InternalServerError:
+      description: Internal Server Error - Something went wrong on the server
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+              - message
+            properties:
+              error:
+                type: string
+                example: "internal_error"
+              message:
+                type: string
+                example: "An unexpected error occurred"

@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 2, 6, 23; /* Deep Dark Slate (#020617) */
+    --background-end-rgb: 2, 6, 23;
+  }
+}
+
+/* Apply antialiasing for smoother fonts */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background:
+    radial-gradient(at top right, rgba(79, 70, 229, 0.1), transparent 70%), /* Subtle indigo glow at top-right */
+    radial-gradient(at center, rgba(79, 70, 229, 0.05), transparent 60%), /* Center glow for depth */
+    linear-gradient(
+      to bottom,
+      rgb(var(--background-start-rgb)),
+      rgb(var(--background-end-rgb))
+    );
+  min-height: 100vh;
+}
+
+/* Enhanced scrollbar design for premium feel */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e293b; /* slate-800 */
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(79, 70, 229, 0.3); /* indigo-500/30 as specified for hover effect */
+}
+
+/* Firefox scrollbar styling */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #1e293b transparent;
+}
+
+/* Glassmorphism container base styles with fallbacks */
+.glass-container {
+  background: rgba(15, 23, 42, 0.8); /* Fallback background for browsers that don't support backdrop-filter */
+  border: 1px solid #1e293b; /* slate-800 border */
+  border-radius: 0.75rem; /* rounded-xl */
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+/* Override with semi-transparent background if backdrop-filter is supported */
+@supports (backdrop-filter: blur(10px)) {
+  .glass-container {
+    background: rgba(15, 23, 42, 0.4); /* slate-900/40 for glass effect */
+  }
+}
+
+.glass-container:hover {
+  border-color: rgba(79, 70, 229, 0.3); /* indigo-500/30 hover effect */
+  transition: border-color 0.2s ease;
+}
+
+/* Base typography enhancements */
+h1, h2, h3, h4, h5, h6 {
+  @apply font-semibold;
+}
+
+p, span, div {
+  @apply leading-relaxed;
+}
+
+/* Focus styles for accessibility */
+.focus-outline {
+  @apply focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-900;
+}

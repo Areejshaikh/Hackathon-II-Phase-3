@@ -1,0 +1,282 @@
+# API Contract: Tasks Service
+
+## Overview
+This document specifies the API contract for the tasks management service in the Todo Pro application.
+
+## Base URL
+```
+https://api.todopro.com/v1
+```
+
+## Authentication
+All endpoints require a valid JWT token to be included in the request header:
+```
+Authorization: Bearer <jwt_token>
+```
+
+## Endpoints
+
+### GET /tasks
+Retrieve all tasks for the authenticated user.
+
+#### Query Parameters
+- `limit` (integer, optional): Number of tasks to return (default: 20, max: 100)
+- `offset` (integer, optional): Number of tasks to skip (default: 0)
+- `status` (string, optional): Filter by status (values: "Pending", "In-Progress", "Completed")
+- `category` (string, optional): Filter by category (values: "Personal", "Work", "Urgent")
+- `search` (string, optional): Search term to match against task titles and descriptions
+
+#### Headers
+```
+Authorization: Bearer <jwt_token>
+```
+
+#### Response 200 OK
+```json
+{
+  "success": true,
+  "data": {
+    "tasks": [
+      {
+        "id": "uuid-string",
+        "title": "Complete project proposal",
+        "description": "Finish the proposal document for client review",
+        "status": "In-Progress",
+        "category": "Work",
+        "due_date": "2023-12-31T23:59:59Z",
+        "priority": 4,
+        "created_at": "2023-01-01T00:00:00Z",
+        "updated_at": "2023-01-02T10:30:00Z",
+        "user_id": "user-uuid-string"
+      }
+    ],
+    "pagination": {
+      "total": 1,
+      "limit": 20,
+      "offset": 0,
+      "has_more": false
+    }
+  }
+}
+```
+
+### POST /tasks
+Create a new task for the authenticated user.
+
+#### Headers
+```
+Authorization: Bearer <jwt_token>
+```
+
+#### Request
+```json
+{
+  "title": "Buy groceries",
+  "description": "Milk, eggs, bread, fruits",
+  "status": "Pending",
+  "category": "Personal",
+  "due_date": "2023-12-31T23:59:59Z",
+  "priority": 3
+}
+```
+
+#### Response 201 Created
+```json
+{
+  "success": true,
+  "message": "Task created successfully",
+  "data": {
+    "id": "uuid-string",
+    "title": "Buy groceries",
+    "description": "Milk, eggs, bread, fruits",
+    "status": "Pending",
+    "category": "Personal",
+    "due_date": "2023-12-31T23:59:59Z",
+    "priority": 3,
+    "created_at": "2023-01-01T00:00:00Z",
+    "updated_at": "2023-01-01T00:00:00Z",
+    "user_id": "user-uuid-string"
+  }
+}
+```
+
+### GET /tasks/{id}
+Retrieve a specific task by ID.
+
+#### Path Parameters
+- `id` (string): Task ID
+
+#### Headers
+```
+Authorization: Bearer <jwt_token>
+```
+
+#### Response 200 OK
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid-string",
+    "title": "Complete project proposal",
+    "description": "Finish the proposal document for client review",
+    "status": "In-Progress",
+    "category": "Work",
+    "due_date": "2023-12-31T23:59:59Z",
+    "priority": 4,
+    "created_at": "2023-01-01T00:00:00Z",
+    "updated_at": "2023-01-02T10:30:00Z",
+    "user_id": "user-uuid-string"
+  }
+}
+```
+
+#### Response 404 Not Found
+```json
+{
+  "success": false,
+  "message": "Task not found"
+}
+```
+
+### PUT /tasks/{id}
+Update a specific task by ID.
+
+#### Path Parameters
+- `id` (string): Task ID
+
+#### Headers
+```
+Authorization: Bearer <jwt_token>
+```
+
+#### Request
+```json
+{
+  "title": "Updated task title",
+  "status": "Completed",
+  "priority": 5
+}
+```
+
+#### Response 200 OK
+```json
+{
+  "success": true,
+  "message": "Task updated successfully",
+  "data": {
+    "id": "uuid-string",
+    "title": "Updated task title",
+    "description": "Finish the proposal document for client review",
+    "status": "Completed",
+    "category": "Work",
+    "due_date": "2023-12-31T23:59:59Z",
+    "priority": 5,
+    "created_at": "2023-01-01T00:00:00Z",
+    "updated_at": "2023-01-03T15:45:00Z",
+    "user_id": "user-uuid-string"
+  }
+}
+```
+
+### DELETE /tasks/{id}
+Delete a specific task by ID.
+
+#### Path Parameters
+- `id` (string): Task ID
+
+#### Headers
+```
+Authorization: Bearer <jwt_token>
+```
+
+#### Response 200 OK
+```json
+{
+  "success": true,
+  "message": "Task deleted successfully"
+}
+```
+
+### PATCH /tasks/{id}/status
+Update the status of a specific task.
+
+#### Path Parameters
+- `id` (string): Task ID
+
+#### Headers
+```
+Authorization: Bearer <jwt_token>
+```
+
+#### Request
+```json
+{
+  "status": "Completed"
+}
+```
+
+#### Response 200 OK
+```json
+{
+  "success": true,
+  "message": "Task status updated successfully",
+  "data": {
+    "id": "uuid-string",
+    "status": "Completed",
+    "updated_at": "2023-01-03T16:00:00Z"
+  }
+}
+```
+
+### GET /tasks/categories
+Retrieve all available task categories.
+
+#### Headers
+```
+Authorization: Bearer <jwt_token>
+```
+
+#### Response 200 OK
+```json
+{
+  "success": true,
+  "data": {
+    "categories": [
+      {
+        "name": "Personal",
+        "count": 15
+      },
+      {
+        "name": "Work",
+        "count": 8
+      },
+      {
+        "name": "Urgent",
+        "count": 3
+      }
+    ]
+  }
+}
+```
+
+### GET /tasks/stats
+Retrieve task statistics for the authenticated user.
+
+#### Headers
+```
+Authorization: Bearer <jwt_token>
+```
+
+#### Response 200 OK
+```json
+{
+  "success": true,
+  "data": {
+    "total_tasks": 26,
+    "pending_tasks": 12,
+    "in_progress_tasks": 8,
+    "completed_tasks": 6,
+    "overdue_tasks": 2
+  }
+}
+```
