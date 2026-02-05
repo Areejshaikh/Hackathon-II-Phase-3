@@ -32,22 +32,31 @@ const SignUpPage = () => {
 
     try {
       console.log('Attempting registration with:', formData);
-      
+
       await register({
         email: formData.email,
         password: formData.password,
-        first_name: formData.firstName,
-        last_name: formData.lastName
+        first_name: formData.firstName, // Snake_case
+        last_name: formData.lastName    // Snake_case
       });
 
       // SUCCESS: Dashboard ya Todo par bheinjein
       console.log("Registration successful! Redirecting...");
-      router.push('/todo'); 
+      router.push('/todo');
 
     } catch (err: any) {
       console.error('Registration error details:', err);
       // Agar backend se detail error aaye to wo dikhayein
-      setError(err.response?.data?.detail || err.message || 'Registration failed. Please try again.');
+      const errorMsg = err.response?.data?.detail || err.message || 'Registration failed. Please try again.';
+      if (errorMsg.includes('already exists')) {
+        setError('This email is already in use. Redirecting you to your Todo dashboard...');
+        // Auto-redirect after showing message
+        setTimeout(() => {
+          router.push('/todo');
+        }, 2000);
+      } else {
+        setError(errorMsg);
+      }
     }
   };
 
@@ -55,7 +64,10 @@ const SignUpPage = () => {
   useEffect(() => {
     if (user && !isRedirecting) {
       setIsRedirecting(true);
-      router.push('/todo');
+      // Show success message and redirect after a brief delay
+      setTimeout(() => {
+        router.push('/todo');
+      }, 500);
     }
   }, [user, router, isRedirecting]);
 
@@ -134,7 +146,7 @@ const SignUpPage = () => {
 
         <div className="mt-6 text-center text-slate-400 text-sm">
           Already have an account?{' '}
-          <Link href="/auth/signin" className="text-indigo-400 hover:underline font-medium">
+          <Link href="/dashboard" className="text-indigo-400 hover:underline font-medium">
             Sign In
           </Link>
         </div>

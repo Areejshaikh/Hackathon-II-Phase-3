@@ -34,7 +34,7 @@ const ChatbotIcon = () => {
   return (
     <div className="fixed bottom-6 right-6 z-50">
       <Link href="/dashboard/chat">
-        <div className="bg-sky-500 hover:bg-sky-600 text-white p-4 rounded-full shadow-lg cursor-pointer transition-all duration-300 transform hover:scale-110 hover:shadow-xl flex items-center justify-center">
+        <div className="bg-indigo-600 hover:bg-indigo-700 text-white p-4 rounded-full shadow-lg cursor-pointer transition-all duration-300 transform hover:scale-110 hover:shadow-xl flex items-center justify-center">
           <Bot size={24} />
         </div>
       </Link>

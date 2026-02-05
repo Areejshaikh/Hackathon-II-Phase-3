@@ -43,7 +43,7 @@ const TodoPage = () => {
     } finally {
       setPageLoading(false);
     }
-  }, []);
+  }, [setTasks]);
 
   // 2. Initial load and Auth check
   useEffect(() => {
@@ -113,6 +113,9 @@ const TodoPage = () => {
       <ChatInterface
         userId={user?.id || ''}
         onClose={() => console.log('Chat closed in todo page')}
+        onTaskAdded={handleAction}  // Refresh tasks when a new task is added via chat
+        onTaskUpdated={handleAction} // Refresh tasks when a task is updated via chat
+        onTaskDeleted={handleAction} // Refresh tasks when a task is deleted via chat
       />
     </div>
   );

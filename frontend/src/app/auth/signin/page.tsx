@@ -24,8 +24,12 @@ const SignInPage = () => {
   // Redirect when user state is updated after login
   useEffect(() => {
     if (user && !isRedirecting) {
+      setError('Sign in successful ✅');
       setIsRedirecting(true);
-      router.push('/todo');
+      // Small delay to show success message before redirecting
+      setTimeout(() => {
+        router.push('/todo');
+      }, 1000);
     }
   }, [user, router, isRedirecting]);
 
@@ -35,6 +39,7 @@ const SignInPage = () => {
      try {
       console.log('Attempting to sign in with:', formData);
       await login(formData.email, formData.password);
+      setError('Sign in successful ✅'); // Show success message
       // Redirect will be handled by useEffect when user state updates
     } catch (err: any) {
       console.error('Sign in error:', err);

@@ -1,7 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Enable the app directory
   experimental: {
-    appDir: true,
+    // Remove appDir as it's enabled by default in Next.js 14+
   },
 }
 

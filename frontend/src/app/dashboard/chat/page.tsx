@@ -26,7 +26,7 @@ const ChatPage = () => {
     // Show a loading state while checking auth
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-sky-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
       </div>
     );
   }
@@ -43,9 +43,9 @@ const ChatPage = () => {
           <ChatInterface userId={userId} />
         </div>
 
-        <div className="mt-8 bg-blue-50 border border-blue-100 rounded-lg p-4 max-w-2xl mx-auto">
-          <h3 className="font-medium text-blue-800 mb-2">How to use:</h3>
-          <ul className="text-blue-700 list-disc pl-5 space-y-1">
+        <div className="mt-8 bg-indigo-50 border border-indigo-100 rounded-lg p-4 max-w-2xl mx-auto">
+          <h3 className="font-medium text-indigo-800 mb-2">How to use:</h3>
+          <ul className="text-indigo-700 list-disc pl-5 space-y-1">
             <li>Add tasks: "Add a task to buy groceries"</li>
             <li>List tasks: "Show me my tasks"</li>
             <li>Complete tasks: "Mark task 1 as complete"</li>

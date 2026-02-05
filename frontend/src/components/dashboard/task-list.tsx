@@ -43,7 +43,7 @@ const TaskList = ({ tasks, onTaskUpdated, onTaskDeleted }: TaskListProps) => {
 
             <h3 className="text-lg font-medium text-slate-200 mb-2">No tasks yet</h3>
             <p className="text-slate-500 mb-4">Create your first task to get started</p>
-            <button
+            <button 
               className="inline-flex items-center px-4 py-2 bg-indigo-600/20 border border-indigo-500/30 rounded-lg text-indigo-300 text-sm hover:bg-indigo-600/30 transition-colors"
               onClick={() => {
                 // Scroll to the task form when clicked

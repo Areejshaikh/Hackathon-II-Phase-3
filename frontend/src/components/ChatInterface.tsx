@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User } from 'lucide-react';
+import { apiClient } from '@/lib/api';
 
 interface ToolResult {
   action: string;
@@ -19,9 +20,12 @@ interface Message {
 interface ChatInterfaceProps {
   userId: string;
   onClose?: () => void;
+  onTaskAdded?: () => void;  // Callback to notify parent when a task is added
+  onTaskUpdated?: () => void; // Callback to notify parent when a task is updated
+  onTaskDeleted?: () => void; // Callback to notify parent when a task is deleted
 }
 
-const ChatInterface: React.FC<ChatInterfaceProps> = ({ userId, onClose }) => {
+const ChatInterface: React.FC<ChatInterfaceProps> = ({ userId, onClose, onTaskAdded, onTaskUpdated, onTaskDeleted }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -33,45 +37,20 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userId, onClose }) => {
   useEffect(() => {
     const fetchGreeting = async () => {
       try {
-        // const response = await fetch(`/api/${userId}/chat`, {
-        const response = await fetch(`http://127.0.0.1:8000/api/${userId}/chat`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('auth-token') || ''}`,
-          },
-          body: JSON.stringify({
-            message: 'greeting', // Special message to trigger greeting
-            conversation_id: null,
-          }),
-        });
+        const data = await apiClient.sendChatMessage(userId, 'greeting') as { response: string };
 
-        if (response.ok) {
-          const data = await response.json();
-
-          // If the response contains a greeting-like message, use it
-          if (data.response && (data.response.startsWith('Hi ') || data.response.includes('Welcome'))) {
-            setMessages([
-              {
-                id: 1,
-                role: 'assistant',
-                content: data.response,
-                timestamp: new Date().toISOString(),
-              }
-            ]);
-          } else {
-            // Fallback to default message
-            setMessages([
-              {
-                id: 1,
-                role: 'assistant',
-                content: `Hi there! I'm your AI assistant. You can ask me to add, list, complete, or delete tasks.`,
-                timestamp: new Date().toISOString(),
-              }
-            ]);
-          }
+        // If the response contains a greeting-like message, use it
+        if (data.response && (data.response.startsWith('Hi ') || data.response.includes('Welcome'))) {
+          setMessages([
+            {
+              id: 1,
+              role: 'assistant',
+              content: data.response,
+              timestamp: new Date().toISOString(),
+            }
+          ]);
         } else {
-          // Fallback to default message if API call fails
+          // Fallback to default message
           setMessages([
             {
               id: 1,
@@ -95,7 +74,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userId, onClose }) => {
       }
     };
 
-    fetchGreeting();
+    if (userId) {
+      fetchGreeting();
+    }
   }, [userId]);
 
   // Scroll to bottom when messages change
@@ -124,24 +105,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userId, onClose }) => {
     setIsLoading(true);
 
     try {
-      // Call the backend chat API
-      const response = await fetch(`/api/${userId}/chat`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth-token') || ''}`, // Assuming token is stored in localStorage
-        },
-        body: JSON.stringify({
-          message: inputValue,
-          conversation_id: null, // Will be set by backend for new conversations
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
+      // Call the backend chat API with user ID using the API client
+      const data = await apiClient.sendChatMessage(userId, inputValue) as { response: string; tool_results?: ToolResult[] };
 
       // Add assistant response to the chat
       const assistantMessage: Message = {
@@ -153,6 +118,27 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userId, onClose }) => {
       };
 
       setMessages(prev => [...prev, assistantMessage]);
+
+      // Check if any tool results indicate a task operation and notify parent
+      if (data.tool_results) {
+        const hasAddTask = data.tool_results.some(result => result.action === 'add_task');
+        const hasUpdateTask = data.tool_results.some(result => result.action === 'update_task' || result.action === 'complete_task');
+        const hasDeleteTask = data.tool_results.some(result => result.action === 'delete_task');
+
+        // Small delay to ensure the message is added before calling the callback
+        setTimeout(() => {
+          if (hasAddTask && onTaskAdded) {
+            onTaskAdded();
+          } else if (hasUpdateTask && onTaskUpdated) {
+            onTaskUpdated();
+          } else if (hasDeleteTask && onTaskDeleted) {
+            onTaskDeleted();
+          } else if ((hasUpdateTask || hasDeleteTask) && onTaskAdded) {
+            // Fallback to onTaskAdded if specific callbacks aren't provided
+            onTaskAdded();
+          }
+        }, 100);
+      }
     } catch (error) {
       console.error('Error sending message:', error);
       // Add error message to the chat
@@ -183,7 +169,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userId, onClose }) => {
     return (
       <button
         onClick={toggleChat}
-        className="fixed bottom-6 right-6 bg-sky-500 hover:bg-sky-600 text-white p-4 rounded-full shadow-lg cursor-pointer transition-all duration-300 transform hover:scale-110 flex items-center justify-center z-50"
+        className="fixed bottom-6 right-6 bg-indigo-600 hover:bg-indigo-700 text-white p-4 rounded-full shadow-lg cursor-pointer transition-all duration-300 transform hover:scale-110 flex items-center justify-center z-50"
       >
         <Bot size={24} />
       </button>
@@ -192,7 +178,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userId, onClose }) => {
 
   if (isMinimized) {
     return (
-      <div className="fixed bottom-6 right-6 bg-sky-500 text-white p-3 rounded-xl shadow-lg cursor-pointer z-50 flex items-center justify-between w-64" onClick={toggleMinimize}>
+      <div className="fixed bottom-6 right-6 bg-indigo-600  text-white p-3 rounded-xl shadow-lg cursor-pointer z-50 flex items-center justify-between w-64" onClick={toggleMinimize}>
         <div className="flex items-center space-x-2">
           <Bot size={16} />
           <span className="font-semibold text-sm">AI Assistant</span>
@@ -203,9 +189,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userId, onClose }) => {
   }
 
   return (
-    <div className="fixed bottom-24  top-16 right-6 w-96 h-[600px] bg-white rounded-xl shadow-xl border border-gray-200 flex flex-col z-50">
+    <div className="fixed bottom-20  top-16 right-6 w-96 h-[560px] bg-white rounded-xl shadow-xl border border-gray-200 flex flex-col z-50">
       {/* Chat header */}
-      <div className="bg-sky-500 text-white p-4 rounded-t-xl flex justify-between items-center">
+      <div className="bg-indigo-600 text-white p-4 rounded-t-xl flex justify-between items-center">
         <div className="flex items-center space-x-2">
           <Bot size={20} />
           <span className="font-semibold">AI Task Assistant</span>
@@ -234,10 +220,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userId, onClose }) => {
             className={`flex mb-4 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div
-              className={`max-w-[80%] rounded-xl p-3 ${message.role === 'user'
-                  ? 'bg-sky-500 text-white rounded-br-none'
+              className={`max-w-[80%] rounded-xl p-3 ${
+                message.role === 'user'
+                  ? 'bg-indigo-600 text-white rounded-br-none'
                   : 'bg-gray-200 text-gray-800 rounded-bl-none'
-                }`}
+              }`}
             >
               <div className="flex items-start space-x-2">
                 {message.role === 'assistant' && <Bot size={16} className="mt-0.5 flex-shrink-0" />}
@@ -318,8 +305,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ userId, onClose }) => {
           <button
             type="submit"
             disabled={isLoading || !inputValue.trim()}
-            className={`bg-sky-500 text-white rounded-full p-2 ${isLoading || !inputValue.trim() ? 'opacity-50 cursor-not-allowed' : 'hover:bg-sky-600'
-              }`}
+            className={`bg-indigo-600 text-white rounded-full p-2 ${
+              isLoading || !inputValue.trim() ? 'opacity-50 cursor-not-allowed' : 'hover:bg-indigo-700'
+            }`}
           >
             <Send size={18} />
           </button>

@@ -42,16 +42,19 @@ const TaskItem = ({ task, onTaskUpdated, onTaskDeleted }: TaskItemProps) => {
   };
 
   const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    try {
-      const isCompleted = e.target.value === 'Completed';
-      apiClient.updateTaskStatus(task.id, isCompleted);
-      if (onTaskUpdated) {
-        onTaskUpdated(); // Notify parent to refresh tasks
-      }
-    } catch (error) {
-      console.error('Error updating task status:', error);
+  const newStatus = e.target.value;
+
+  try {
+    await apiClient.updateTaskStatus(task.id, newStatus);
+
+    if (onTaskUpdated) {
+      onTaskUpdated();
     }
-  };
+  } catch (error) {
+    console.error('Error updating task status:', error);
+    alert("Status update nahi ho saka!");
+  }
+};
 
   // TaskItem.tsx ke handleDeleteTask function ko update karein
 const handleDeleteTask = async () => {
@@ -89,11 +92,11 @@ const handleDeleteTask = async () => {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2">
             {statusIcons[task.status as keyof typeof statusIcons]}
-            <h3 className="font-medium text-slate-100 truncate">{task.title}</h3>
+            <h3 className="font-medium text-slate-100 truncate">Todo: {task.title}</h3>
           </div>
 
           {task.description && (
-            <p className="text-sm text-slate-400 mt-1 line-clamp-2">{task.description}</p>
+            <p className="text-sm text-slate-400 mt-1 line-clamp-2">Description: {task.description}</p>
           )}
 
           <div className="flex items-center gap-2 mt-3 flex-wrap">

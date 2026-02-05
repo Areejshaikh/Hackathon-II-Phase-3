@@ -3,8 +3,12 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
 
 class ApiClient {
-  updateTaskStatus(id: string, isCompleted: boolean) {
-    throw new Error('Method not implemented.');
+  async updateTaskStatus(id: string, status: string) {
+    // Update task status using the PATCH endpoint
+    return this.request(`/api/tasks/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
   }
   private baseUrl: string;
 
@@ -172,11 +176,11 @@ class ApiClient {
     });
   }
 
-  async getTaskById(taskId: number) {
+  async getTaskById(taskId: string) {
     return this.request(`/api/tasks/${taskId}/`);
   }
 
-  async updateTask(taskId: number, taskData: Partial<{ title: string; description?: string; completed?: boolean; category?: string; due_date?: string; priority?: number }>) {
+  async updateTask(taskId: string, taskData: Partial<{ title: string; description?: string; completed?: boolean; category?: string; due_date?: string; priority?: number }>) {
     return this.request(`/api/tasks/${taskId}/`, {
       method: 'PUT',
       body: JSON.stringify(taskData),
