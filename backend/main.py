@@ -99,6 +99,15 @@ app.include_router(chat_router, prefix="/api", tags=["chat"])
 def read_root():
     return {"status": "online"}
 
+@app.get("/health")
+def health_check():
+    """Health check endpoint for container orchestration"""
+    return {
+        "status": "healthy",
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "version": "1.0.0"
+    }
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

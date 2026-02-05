@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m uvicorn main:app --host 0.0.0.0 --port 8000)",
+      "Bash(npx next dev --port 3000)",
+      "Bash(uvicorn main:app --reload --port 8000:*)"
+    ]
+  }
+}

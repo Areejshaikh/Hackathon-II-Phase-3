@@ -40,6 +40,24 @@ async def get_tasks(
         search=search
     )
 
+    # Normalize tasks to ensure consistent field structure for frontend
+    normalized_tasks = []
+    for task in tasks:
+        # Convert SQLModel object to dict and ensure all expected fields are present
+        task_dict = {
+            "id": str(task.id) if task.id else None,
+            "title": task.title or "",
+            "description": task.description or "",
+            "status": task.status.value if hasattr(task.status, 'value') else str(task.status),
+            "category": task.category.value if hasattr(task.category, 'value') else str(task.category),
+            "due_date": task.due_date.isoformat() if task.due_date else None,
+            "priority": task.priority or 3,
+            "user_id": task.user_id or user_id,
+            "created_at": task.created_at.isoformat() if task.created_at else None,
+            "updated_at": task.updated_at.isoformat() if task.updated_at else None,
+        }
+        normalized_tasks.append(task_dict)
+
     # Get total count for pagination
     total = await task_service.get_tasks_count_by_user(
         user_id=user_id,
@@ -51,12 +69,12 @@ async def get_tasks(
     return {
         "success": True,
         "data": {
-            "tasks": tasks,
+            "tasks": normalized_tasks,
             "pagination": {
                 "total": total,
                 "limit": limit,
                 "offset": offset,
-                "has_more": (offset + len(tasks)) < total  # Accurate logic
+                "has_more": (offset + len(normalized_tasks)) < total  # Accurate logic
             }
         }
     }
@@ -81,10 +99,24 @@ async def create_task(
     # Create the task with the authenticated user's ID
     db_task = await task_service.create_task(task, user_id)
 
+    # Normalize the created task to ensure consistent field structure for frontend
+    normalized_task = {
+        "id": str(db_task.id) if db_task.id else None,
+        "title": db_task.title or "",
+        "description": db_task.description or "",
+        "status": db_task.status.value if hasattr(db_task.status, 'value') else str(db_task.status),
+        "category": db_task.category.value if hasattr(db_task.category, 'value') else str(db_task.category),
+        "due_date": db_task.due_date.isoformat() if db_task.due_date else None,
+        "priority": db_task.priority or 3,
+        "user_id": db_task.user_id or user_id,
+        "created_at": db_task.created_at.isoformat() if db_task.created_at else None,
+        "updated_at": db_task.updated_at.isoformat() if db_task.updated_at else None,
+    }
+
     return {
         "success": True,
         "message": "Task created successfully",
-        "data": db_task
+        "data": normalized_task
     }
 
 
@@ -106,16 +138,30 @@ async def get_task(
 
     # Get the task for the current user
     db_task = await task_service.get_task_by_id(task_id, user_id)
-    
+
     if not db_task:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Task not found"
         )
-    
+
+    # Normalize the single task to ensure consistent field structure for frontend
+    normalized_task = {
+        "id": str(db_task.id) if db_task.id else None,
+        "title": db_task.title or "",
+        "description": db_task.description or "",
+        "status": db_task.status.value if hasattr(db_task.status, 'value') else str(db_task.status),
+        "category": db_task.category.value if hasattr(db_task.category, 'value') else str(db_task.category),
+        "due_date": db_task.due_date.isoformat() if db_task.due_date else None,
+        "priority": db_task.priority or 3,
+        "user_id": db_task.user_id or user_id,
+        "created_at": db_task.created_at.isoformat() if db_task.created_at else None,
+        "updated_at": db_task.updated_at.isoformat() if db_task.updated_at else None,
+    }
+
     return {
         "success": True,
-        "data": db_task
+        "data": normalized_task
     }
 
 
@@ -138,17 +184,31 @@ async def update_task(
 
     # Update the task
     updated_task = await task_service.update_task(task_id, user_id, task_update)
-    
+
     if not updated_task:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Task not found"
         )
-    
+
+    # Normalize the updated task to ensure consistent field structure for frontend
+    normalized_task = {
+        "id": str(updated_task.id) if updated_task.id else None,
+        "title": updated_task.title or "",
+        "description": updated_task.description or "",
+        "status": updated_task.status.value if hasattr(updated_task.status, 'value') else str(updated_task.status),
+        "category": updated_task.category.value if hasattr(updated_task.category, 'value') else str(updated_task.category),
+        "due_date": updated_task.due_date.isoformat() if updated_task.due_date else None,
+        "priority": updated_task.priority or 3,
+        "user_id": updated_task.user_id or user_id,
+        "created_at": updated_task.created_at.isoformat() if updated_task.created_at else None,
+        "updated_at": updated_task.updated_at.isoformat() if updated_task.updated_at else None,
+    }
+
     return {
         "success": True,
         "message": "Task updated successfully",
-        "data": updated_task
+        "data": normalized_task
     }
 
 
@@ -205,20 +265,21 @@ async def update_task_status(
 
     # Update the task
     updated_task = await task_service.update_task(task_id, user_id, task_update)
-    
+
     if not updated_task:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Task not found"
         )
-    
+
+    # Return normalized status update response
     return {
         "success": True,
         "message": "Task status updated successfully",
         "data": {
-            "id": updated_task.id,
-            "status": updated_task.status,
-            "updated_at": updated_task.updated_at
+            "id": str(updated_task.id) if updated_task.id else None,
+            "status": updated_task.status.value if hasattr(updated_task.status, 'value') else str(updated_task.status),
+            "updated_at": updated_task.updated_at.isoformat() if updated_task.updated_at else None
         }
     }
 

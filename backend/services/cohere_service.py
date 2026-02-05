@@ -38,31 +38,87 @@ class CohereService:
         # If Cohere service is not enabled, return a default response
         if not self.enabled:
             # Simple rule-based parsing for development
-            user_input_lower = user_input.lower()
-            if any(word in user_input_lower for word in ['add', 'create', 'new']):
+            user_input_lower = user_input.lower().strip()
+
+            # Check for add task commands
+            if any(word in user_input_lower for word in ['add', 'create', 'make', 'new']):
+                # Extract task title from the input
+                title = user_input
+                if 'add' in user_input_lower:
+                    title = user_input_lower.split('add', 1)[1].strip()
+                elif 'create' in user_input_lower:
+                    title = user_input_lower.split('create', 1)[1].strip()
+                elif 'new' in user_input_lower:
+                    title = user_input_lower.split('new', 1)[1].strip()
+
+                # Clean up common prefixes like "task:", "a task:", etc.
+                if title.startswith('task:') or title.startswith('a task:') or title.startswith('an task:'):
+                    title = title.split(':', 1)[1].strip()
+                elif title.startswith('to ') or title.startswith('that '):
+                    title = title[3:].strip()
+
                 return {
                     "action": "add_task",
                     "response_text": f"Adding a new task based on: {user_input}",
-                    "parameters": {"title": user_input}
+                    "parameters": {"title": title}
                 }
-            elif any(word in user_input_lower for word in ['list', 'show', 'all']):
+
+            # Check for list tasks commands
+            elif any(word in user_input_lower for word in ['list', 'show', 'all', 'view', 'display']):
                 return {
                     "action": "list_tasks",
                     "response_text": "Showing all tasks",
                     "parameters": {}
                 }
-            elif any(word in user_input_lower for word in ['complete', 'done', 'finish']):
+
+            # Check for complete task commands
+            elif any(word in user_input_lower for word in ['complete', 'done', 'finish', 'mark as done']):
+                # Extract task title if specified
+                title = ""
+                if 'complete' in user_input_lower:
+                    title = user_input_lower.split('complete', 1)[1].strip()
+                elif 'done' in user_input_lower and 'as' not in user_input_lower:  # Avoid "mark as done" case
+                    title = user_input_lower.split('done', 1)[0].strip()
+                elif 'finish' in user_input_lower:
+                    title = user_input_lower.split('finish', 1)[1].strip()
+
+                # Clean up the title
+                if title.startswith('task') or title.startswith('the'):
+                    title = title.split(' ', 1)[1].strip()
+
                 return {
                     "action": "complete_task",
                     "response_text": "Completing a task",
-                    "parameters": {}
+                    "parameters": {"title": title} if title else {}
                 }
+
+            # Check for update task status commands (in progress, etc.)
+            elif 'in progress' in user_input_lower or 'mark as in progress' in user_input_lower or 'working on' in user_input_lower:
+                # Extract task title
+                title = user_input_lower
+                if 'in progress' in user_input_lower:
+                    title = user_input_lower.replace('mark', '').replace('as', '').replace('in progress', '').strip()
+                elif 'working on' in user_input_lower:
+                    title = user_input_lower.replace('working on', '').strip()
+
+                # Clean up the title
+                if title.startswith('task') or title.startswith('the'):
+                    title = title.split(' ', 1)[1].strip()
+
+                return {
+                    "action": "update_task_status",
+                    "response_text": "Updating task status to in progress",
+                    "parameters": {"title": title.strip(), "status": "IN_PROGRESS"}
+                }
+
+            # Check for delete commands
             elif any(word in user_input_lower for word in ['delete', 'remove']):
                 return {
                     "action": "delete_task",
                     "response_text": "Deleting a task",
                     "parameters": {}
                 }
+
             else:
                 return {
                     "action": "unknown",
@@ -93,17 +149,15 @@ class CohereService:
         """
 
         try:
-            # Generate a response using Cohere
-            response = self.client.generate(
-                model='command',
-                prompt=prompt,
+            # Use the new Chat API with updated model instead of the deprecated Generate API
+            response = self.client.chat(
+                message=prompt,
                 max_tokens=300,
-                temperature=0.1,
-                stop_sequences=['}']
+                temperature=0.1
             )
 
             # Extract the response text
-            response_text = response.generations[0].text.strip()
+            response_text = response.text.strip()
 
             # Try to parse the response as JSON
             import json
@@ -159,16 +213,15 @@ class CohereService:
             Assistant:"""
 
         try:
-            # Generate a response using Cohere
-            response = self.client.generate(
-                model='command',
-                prompt=prompt,
+            # Use the new Chat API with updated model instead of the deprecated Generate API
+            response = self.client.chat(
+                message=prompt,
                 max_tokens=300,
                 temperature=0.7
             )
 
             # Extract and return the response text
-            return response.generations[0].text.strip()
+            return response.text.strip()
 
         except Exception as e:
             return f"Sorry, I encountered an error generating a response: {str(e)}"

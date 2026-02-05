@@ -1,7 +1,7 @@
 from typing import Optional
-from sqlmodel import Session, select
+from sqlmodel import select
+from sqlmodel.ext.asyncio.session import AsyncSession
 from src.models.user import User
-from src.database.session import get_session
 
 
 class UserService:
@@ -10,33 +10,34 @@ class UserService:
     for personalized greetings.
     """
 
-    def get_user_by_id(self, user_id: str, db_session: Session) -> Optional[User]:
+    async def get_user_by_id(self, user_id: str, db_session: AsyncSession) -> Optional[User]:
         """
         Retrieve a user by their ID from the database
 
         Args:
             user_id (str): The ID of the user to retrieve
-            db_session (Session): Database session to use for the query
+            db_session (AsyncSession): Database session to use for the query
 
         Returns:
             User: The user object if found, None otherwise
         """
         statement = select(User).where(User.id == user_id)
-        user = db_session.exec(statement).first()
+        result = await db_session.execute(statement)
+        user = result.scalar_one_or_none()
         return user
 
-    def get_user_full_name(self, user_id: str, db_session: Session) -> Optional[str]:
+    async def get_user_full_name(self, user_id: str, db_session: AsyncSession) -> Optional[str]:
         """
         Get the full name of a user by their ID
 
         Args:
             user_id (str): The ID of the user
-            db_session (Session): Database session to use for the query
+            db_session (AsyncSession): Database session to use for the query
 
         Returns:
             str: The user's full name if available, None otherwise
         """
-        user = self.get_user_by_id(user_id, db_session)
+        user = await self.get_user_by_id(user_id, db_session)
         if user:
             # Combine first name and last name if available, otherwise use email or username
             full_name_parts = []
@@ -53,35 +54,35 @@ class UserService:
                 return user.email.split('@')[0]  # Use part of email before @ as name
         return None
 
-    def get_user_email(self, user_id: str, db_session: Session) -> Optional[str]:
+    async def get_user_email(self, user_id: str, db_session: AsyncSession) -> Optional[str]:
         """
         Get the email of a user by their ID
 
         Args:
             user_id (str): The ID of the user
-            db_session (Session): Database session to use for the query
+            db_session (AsyncSession): Database session to use for the query
 
         Returns:
             str: The user's email if available, None otherwise
         """
-        user = self.get_user_by_id(user_id, db_session)
+        user = await self.get_user_by_id(user_id, db_session)
         if user:
             return user.email
         return None
 
-    def get_personalized_greeting(self, user_id: str, db_session: Session) -> str:
+    async def get_personalized_greeting(self, user_id: str, db_session: AsyncSession) -> str:
         """
         Generate a personalized greeting for the user
 
         Args:
             user_id (str): The ID of the user
-            db_session (Session): Database session to use for the query
+            db_session (AsyncSession): Database session to use for the query
 
         Returns:
             str: A personalized greeting in the format "Hi [name] ([email])"
         """
-        name = self.get_user_full_name(user_id, db_session)
-        email = self.get_user_email(user_id, db_session)
+        name = await self.get_user_full_name(user_id, db_session)
+        email = await self.get_user_email(user_id, db_session)
 
         if name and email:
             return f"Hi {name} ({email})"

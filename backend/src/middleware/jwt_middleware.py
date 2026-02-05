@@ -35,6 +35,7 @@ class JWTMiddleware(BaseHTTPMiddleware):
         # Check if this is a public route that should bypass authentication
         is_public_route = (
             path == "/" or
+            path == "/health" or
             path.startswith("/docs") or  # Handles /docs, /docs/, and /docs/swagger-ui-bundle.js, etc.
             path.startswith("/redoc") or  # Handles /redoc, /redoc/, and /redoc/redoc.standalone.js, etc.
             path == "/openapi.json" or

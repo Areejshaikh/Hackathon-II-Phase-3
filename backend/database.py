@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 from sqlmodel import SQLModel
-from .db_init import get_tables_to_create
+from db_init import get_tables_to_create
 
 
 # Use SQLite for simplicity, but this could be changed to PostgreSQL, MySQL, etc.
